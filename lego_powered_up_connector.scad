@@ -57,6 +57,11 @@ handle_height = 7.4;
 handle_cable_hole_width = contact_pitch*6;
 handle_cable_hole_height = contact_pitch*2;
 
+// side-grip notches in sides of plug
+side_notch_xoff = 3.5;
+side_notch_x = 0.8;
+side_notch_y = 0.2;
+
 s = 0.001;
 
 // Plug part
@@ -81,7 +86,7 @@ difference()
         difference()
         {
             cube([
-                handle_length,
+                handle_length+2*s,
                 handle_width,
                 handle_height
             ]);
@@ -89,7 +94,6 @@ difference()
     }
 
     // Cut the way between the contacts on the contact area, removing the edge-guide part.
-    for (i = [0,1])
     translate([
         -s,
         -s + contact_holder_edge_guide_width,
@@ -157,7 +161,17 @@ difference()
     ]);
     
     // Cut out the notches for the side grips to engage.
-    
+    for (i = [0,1])
+    translate([
+        side_notch_xoff,
+        -s + i*(contact_holder_total_width-side_notch_y),
+        -s
+    ])
+    cube([
+        side_notch_x,
+        side_notch_y+2*s,
+        contact_holder_total_height+2*s
+    ]);
         
 };
 
