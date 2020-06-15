@@ -19,7 +19,6 @@
  //
  // Note plug has some alignment features too. Small insets on sides for protrusions in socket to engage with. Small bump on end of contact area to align contacts by engaging with deepest part of socket.
 
-
 contact_holder_contacts_width = 7.9;
 contact_holder_edge_guide_width = 1.2;
 // Therefore total width of plug is approx 10.25 or 10.30
