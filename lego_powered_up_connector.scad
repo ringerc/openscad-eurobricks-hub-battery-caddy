@@ -42,7 +42,7 @@ contact_inset_width = contact_pitch/2;
 contact_inset_extra_length = 2.5;
 
 // notch placement for where contacts should slot into plug - distance from end
-contact_termination_hole_length_inset = 0.5;
+contact_termination_hole_length_inset = 0.3;
 contact_termination_hole_length = contact_width*3;
 
 contact_holder_length = 5.90;
@@ -111,6 +111,7 @@ difference()
         // Main contacts area
         for (c = [1 : 6]) {
             // Pitch is the critical factor in contact placement.  At a pitch of 1.27mm, the width is 7.62mm. The measured 7.9 is because there are lips on the edges. Place contacts from center out. This is the cutouts.
+            // This both makes the wire channels in the front and the holes for the conductors in the back plug cutout.
             translate([0, (contact_pitch - contact_inset_width)/2, 0])
             {
                 translate([
@@ -125,29 +126,43 @@ difference()
                     ]);
                 
                 // Cut notches for the contacts to slot into to hold
-                // them in place. These go near the end of the plug. Sloped for easy insertion.
+                // them in place. These go near the end of the plug. Back-sloped so they tend to hold position.
                 
                 translate([
                     contact_holder_length - contact_termination_hole_length_inset - contact_height,
                     (c-1)*contact_pitch,
                     contact_holder_base_height
                 ])
-                rotate([0,-25,0])
+                rotate([0,25,0])
                 translate([
                     0,
                     (contact_pitch/2 - contact_width)/2,
-                    -contact_termination_hole_length
+                    -contact_termination_hole_length*0.95
                 ])
                 cube([
                     contact_height+s,
                     contact_width+s,
                     contact_termination_hole_length
                 ]);
+                
+                // Cut the holes for the conductors through the plug hole a bit bigger
+                // so it's easier to run them.
+                translate([
+                    -s-contact_inset_extra_length,
+                    (c-1)*contact_pitch,
+                    contact_holder_base_height - contact_holder_contact_inset_height/2
+                ])
+                cube([
+                    contact_inset_extra_length+2*s,
+                    contact_inset_width,
+                    contact_holder_contact_inset_height*2
+                    ]);
             }
         }
     }
     
-    // Cut out the cable space in the plug connector.
+    // Cut out the cable space in the plug connector, not including the individual
+    // conductor channel holes.
     translate([
         -s - handle_length,
         abs(handle_cable_hole_width-contact_holder_total_width)/2,
