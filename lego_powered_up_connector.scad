@@ -8,6 +8,12 @@
  // Reposition clip for printing layout
  flip_clip = 1;
  
+ // Adjustment for clip fit
+ clip_tolerance = -0.05;
+ 
+ // Adjustment for clamp over conductors fit
+ clampdown_top_tolerance = 0.1;
+ 
  
  // Contact area
  // Critical dimensions to fit the socket are:
@@ -57,7 +63,12 @@ contact_holder_length = 5.90;
 // Less dimensoinally critical, the handle part
 handle_length = 7.8;
 handle_width = 13.9;
-handle_height = 6.4;
+// z axis handle as pos above and below
+handle_height_down = 0;
+handle_height_up = 6.4 - contact_holder_total_height;
+//handle_height_up = (6.4 - contact_holder_total_height)/2;
+//handle_height_down = handle_height_up;
+handle_height = handle_height_up + handle_height_down +  contact_holder_total_height;
 
 // cable-hole area in handle
 handle_cable_hole_width = contact_pitch*6;
@@ -89,7 +100,7 @@ difference()
         translate([
             -handle_length +s,
             -(handle_width - contact_holder_total_width)/2,
-            -(handle_height - contact_holder_total_height)/2
+            -handle_height_down
         ])
         difference()
         {
@@ -133,39 +144,6 @@ difference()
                     contact_inset_width,
                     contact_holder_contact_inset_height
                     ]);
-                
-                // Cut notches for the contacts to slot into to hold
-                // them in place. These go near the end of the plug. Back-sloped so they tend to hold position.
-                
-                translate([
-                    contact_holder_length - contact_termination_hole_length_inset - contact_height,
-                    (c-1)*contact_pitch,
-                    contact_holder_base_height
-                ])
-                rotate([0,25,0])
-                translate([
-                    0,
-                    (contact_pitch/2 - contact_width)/2,
-                    -contact_termination_hole_length*0.95
-                ])
-                cube([
-                    contact_height+s,
-                    contact_width+s,
-                    contact_termination_hole_length
-                ]);
-                
-                // Cut the holes for the conductors through the plug hole a bit bigger
-                // so it's easier to run them.
-                translate([
-                    -s-contact_inset_extra_length,
-                    (c-1)*contact_pitch,
-                    contact_holder_base_height - contact_holder_contact_inset_height/2
-                ])
-                cube([
-                    contact_inset_extra_length+4*s,
-                    contact_inset_width,
-                    contact_holder_contact_inset_height*2
-                    ]);
             }
         }
     }
@@ -202,22 +180,10 @@ difference()
 // Support cutting out a separate clip in the handle
 //
 // The clip tolerance should be +ve for the clip and negative when used as a mask. It affects the clip tooth size and clip width and length.
-module plug_clamp(clip_tolerance) {
+module plug_clamp(clip_tolerance, clampdown_top_tolerance) {
 union()
 {
-    // Clampdown area over contacts
-    translate([
-        -s - contact_inset_extra_length,
-        -s + contact_holder_edge_guide_width - clip_tolerance/2,
-        -s + contact_holder_base_height + contact_holder_contact_inset_height
-    ])
-    cube([
-        contact_inset_extra_length + 2*s,
-        contact_holder_contacts_width + 2*s + clip_tolerance,
-        contact_holder_edge_guide_height + 2*s
-        ]);
-
-    // lid
+    // lid of clip
     translate([
         -handle_length -s,
         -s -(handle_width - contact_holder_total_width)/2,
@@ -228,17 +194,30 @@ union()
         cube([
             handle_length+6*s,
             handle_width+2*s,
-            (handle_height - contact_holder_total_height)/2 + 2*s
+            handle_height_up + 2*s
         ]);
     }
+ 
+    // Clampdown area over contacts
+    let(clampdown_side_tolerance = -0.6)
+    translate([
+        -s - contact_inset_extra_length,
+        -s + contact_holder_edge_guide_width - clampdown_side_tolerance/2,
+        -s + contact_holder_base_height + contact_holder_contact_inset_height - clampdown_top_tolerance
+    ])
+    cube([
+        contact_inset_extra_length + 2*s,
+        contact_holder_contacts_width + 2*s + clampdown_side_tolerance,
+        contact_holder_edge_guide_height + clampdown_top_tolerance + 2*s
+        ]);
     
     // cutouts in sides for clips
     let(
         clip_length = handle_length/2 + clip_tolerance,
-        clip_width = (handle_width - contact_holder_total_width)/6 + clip_tolerance,
+        clip_width = (handle_width - contact_holder_total_width)/4 + clip_tolerance,
         clip_height = contact_holder_total_height * 0.75,
-        clip_tooth_length = clip_width,
-        clip_tooth_width = clip_width
+        clip_tooth_length = clip_width/2,
+        clip_tooth_width = clip_width/2
     )
     translate([
         -handle_length * 0.75 - clip_tolerance/2,
@@ -251,75 +230,60 @@ union()
             cube([clip_length, clip_width, clip_height + abs(clip_tolerance)]);
         
             translate([0, clip_width - s, 0])
-            cube([clip_length, clip_tooth_width + s, clip_tooth_length + clip_tolerance/2]);
+            cube([clip_length, clip_tooth_length + s, clip_tooth_width + clip_tolerance/2]);
         }
         
         translate([0, handle_width/2 + contact_holder_total_width/2 - clip_width + s, 0])
         {
             cube([clip_length, clip_width, clip_height + abs(clip_tolerance)]);
             
-            translate([0, -clip_width - s, 0])
-            cube([clip_length, clip_tooth_width + 2* s, clip_tooth_length]);
+            translate([0, -clip_tooth_length - s, 0])
+            cube([clip_length, clip_tooth_length + 2* s, clip_tooth_width]);
         }
     }
-    
-    // Notches to press down on the conductors in their channels
-    translate([
-        -contact_inset_extra_length,
-        contact_holder_total_width/2,
-        contact_holder_base_height + contact_holder_contact_inset_height/2
-    ])
-    for (c = [1:6]) {
-    let(coff = (c-3.5)*contact_pitch - contact_width/2)
-    translate([0, coff , 0])
-    cube([
-        contact_inset_extra_length,
-        contact_width,
-        contact_height
-    ]);
-}
 }
 }
 
 module plug_base(clip_tolerance) {
     difference() {
         plug();
-        plug_clamp(-clip_tolerance);
+        plug_clamp(-clip_tolerance, 0);
     }
 }
 
 
-translate([0,0,contact_holder_base_height/2])
-{
-    if (render_base) plug_base(0);
+if (render_base)
+translate([0,0,handle_height_down])
+plug_base(clip_tolerance);
 
-    if (render_clip) {
-        let (
-            clip_rotate = flip_clip ? 180 : 0,
-            clip_xoff = flip_clip ? (contact_holder_length + handle_length + 10) : 0,
-            clip_yoff = flip_clip ? -contact_holder_total_width : 0,
-            clip_zoff = flip_clip ? -contact_holder_total_height : 0
-        )
-        rotate([clip_rotate,0,0])
-        translate([clip_xoff, clip_yoff, clip_zoff])
-        color("red") plug_clamp(-0.1);
-    }
 
-    // Model the contacts too. Place them from center out.
-    if ($preview)
-    color("red", 0.5)
-    translate([
-        -handle_length,
-        contact_holder_total_width/2,
-        contact_holder_base_height
-    ])
-    for (c = [1:6]) {
-        let(coff = (c-3.5)*contact_pitch - contact_width/2)
-        translate([0, coff , 0])
-        cube([
-            contact_holder_length+handle_length,
-            contact_width,
-            contact_height
-        ]);
-    }
+// Model the contacts too. Place them from center out.
+if ($preview)
+color("red", 0.5)
+translate([0,0,handle_height_down])
+translate([
+    -handle_length,
+    contact_holder_total_width/2,
+    contact_holder_base_height
+])
+for (c = [1:6]) {
+    let(coff = (c-3.5)*contact_pitch - contact_width/2)
+    translate([0, coff , 0])
+    cube([
+        contact_holder_length+handle_length,
+        contact_width,
+        contact_height
+    ]);
+}
+
+if (render_clip) {
+    let (
+        clip_rotate = flip_clip ? 180 : 0,
+        clip_xoff = flip_clip ? (contact_holder_length + handle_length + 10) : 0,
+        clip_yoff = flip_clip ? -contact_holder_total_width : 0,
+        clip_zoff = flip_clip ? (-contact_holder_total_height - handle_height_up) : 0
+    )
+    rotate([clip_rotate,0,0])
+    translate([clip_xoff, clip_yoff, clip_zoff])
+    color("red") plug_clamp(clip_tolerance, clampdown_top_tolerance);
 }
