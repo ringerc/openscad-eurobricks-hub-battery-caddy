@@ -2,6 +2,13 @@
  * Attempt to design Powered Up-compatible power/data connector.
  */
  
+ // Controls to split out the parts
+ render_base = 1;
+ render_clip = 1;
+ // Reposition clip for printing layout
+ flip_clip = 1;
+ 
+ 
  // Contact area
  // Critical dimensions to fit the socket are:
  //
@@ -193,22 +200,20 @@ difference()
 }
 
 // Support cutting out a separate clip in the handle
-
-
-    // Clamp over the contact area
-module plug_clamp() {
-color("red")
+//
+// The clip tolerance should be +ve for the clip and negative when used as a mask. It affects the clip tooth size and clip width and length.
+module plug_clamp(clip_tolerance) {
 union()
 {
     // Clampdown area over contacts
     translate([
         -s - contact_inset_extra_length,
-        -s + contact_holder_edge_guide_width,
+        -s + contact_holder_edge_guide_width - clip_tolerance/2,
         -s + contact_holder_base_height + contact_holder_contact_inset_height
     ])
     cube([
         contact_inset_extra_length + 2*s,
-        contact_holder_contacts_width + 2*s,
+        contact_holder_contacts_width + 2*s + clip_tolerance,
         contact_holder_edge_guide_height + 2*s
         ]);
 
@@ -229,49 +234,92 @@ union()
     
     // cutouts in sides for clips
     let(
-        clip_length = handle_length/2,
-        clip_width = (handle_width - contact_holder_total_width)/6,
-        clip_height = contact_holder_total_height * 0.75
+        clip_length = handle_length/2 + clip_tolerance,
+        clip_width = (handle_width - contact_holder_total_width)/6 + clip_tolerance,
+        clip_height = contact_holder_total_height * 0.75,
+        clip_tooth_length = clip_width,
+        clip_tooth_width = clip_width
     )
     translate([
-        -handle_length * 0.75,
+        -handle_length * 0.75 - clip_tolerance/2,
         0,
-        contact_holder_total_height - clip_height
+        contact_holder_total_height - clip_height - clip_tolerance/2
     ])
     {
         translate([0, -(handle_width - contact_holder_total_width)/2 - s, 0])
-        cube([clip_length, clip_width, clip_height]);
+        {
+            cube([clip_length, clip_width, clip_height + abs(clip_tolerance)]);
+        
+            translate([0, clip_width - s, 0])
+            cube([clip_length, clip_tooth_width + s, clip_tooth_length + clip_tolerance/2]);
+        }
         
         translate([0, handle_width/2 + contact_holder_total_width/2 - clip_width + s, 0])
-        cube([clip_length, clip_width, clip_height]);
+        {
+            cube([clip_length, clip_width, clip_height + abs(clip_tolerance)]);
+            
+            translate([0, -clip_width - s, 0])
+            cube([clip_length, clip_tooth_width + 2* s, clip_tooth_length]);
+        }
     }
-}
-}
-
-module plug_base() {
-    difference() {
-        plug();
-        plug_clamp();
-    }
-}
-
-//plug_base();
-plug_clamp();
-
-// Model the contacts too. Place them from center out.
-if ($preview)
-color("red", 0.5)
-translate([
-    -handle_length,
-    contact_holder_total_width/2,
-    contact_holder_base_height
-])
-for (c = [1:6]) {
+    
+    // Notches to press down on the conductors in their channels
+    translate([
+        -contact_inset_extra_length,
+        contact_holder_total_width/2,
+        contact_holder_base_height + contact_holder_contact_inset_height/2
+    ])
+    for (c = [1:6]) {
     let(coff = (c-3.5)*contact_pitch - contact_width/2)
     translate([0, coff , 0])
     cube([
-        contact_holder_length+handle_length,
+        contact_inset_extra_length,
         contact_width,
         contact_height
     ]);
+}
+}
+}
+
+module plug_base(clip_tolerance) {
+    difference() {
+        plug();
+        plug_clamp(-clip_tolerance);
+    }
+}
+
+
+translate([0,0,contact_holder_base_height/2])
+{
+    if (render_base) plug_base(0);
+
+    if (render_clip) {
+        let (
+            clip_rotate = flip_clip ? 180 : 0,
+            clip_xoff = flip_clip ? (contact_holder_length + handle_length + 10) : 0,
+            clip_yoff = flip_clip ? -contact_holder_total_width : 0,
+            clip_zoff = flip_clip ? -contact_holder_total_height : 0
+        )
+        rotate([clip_rotate,0,0])
+        translate([clip_xoff, clip_yoff, clip_zoff])
+        color("red") plug_clamp(-0.1);
+    }
+
+    // Model the contacts too. Place them from center out.
+    if ($preview)
+    color("red", 0.5)
+    translate([
+        -handle_length,
+        contact_holder_total_width/2,
+        contact_holder_base_height
+    ])
+    for (c = [1:6]) {
+        let(coff = (c-3.5)*contact_pitch - contact_width/2)
+        translate([0, coff , 0])
+        cube([
+            contact_holder_length+handle_length,
+            contact_width,
+            contact_height
+        ]);
+    }
 }
