@@ -50,7 +50,7 @@ contact_holder_length = 5.90;
 // Less dimensoinally critical, the handle part
 handle_length = 7.8;
 handle_width = 13.9;
-handle_height = 7.4;
+handle_height = 6.4;
 
 // cable-hole area in handle
 handle_cable_hole_width = contact_pitch*6;
@@ -64,8 +64,10 @@ side_notch_y = 0.2;
 s = 0.001;
 
 // Plug part
+module plug() {
 difference()
 {
+    // Form a solid to cut pieces out from
     union() {
         
         // Main contact area chunk
@@ -153,7 +155,7 @@ difference()
                     contact_holder_base_height - contact_holder_contact_inset_height/2
                 ])
                 cube([
-                    contact_inset_extra_length+2*s,
+                    contact_inset_extra_length+4*s,
                     contact_inset_width,
                     contact_holder_contact_inset_height*2
                     ]);
@@ -187,8 +189,74 @@ difference()
         contact_holder_total_height+2*s
     ]);
         
-};
+}
+}
 
+// Support cutting out a separate clip in the handle
+
+
+    // Clamp over the contact area
+module plug_clamp() {
+color("red")
+union()
+{
+    // Clampdown area over contacts
+    translate([
+        -s - contact_inset_extra_length,
+        -s + contact_holder_edge_guide_width,
+        -s + contact_holder_base_height + contact_holder_contact_inset_height
+    ])
+    cube([
+        contact_inset_extra_length + 2*s,
+        contact_holder_contacts_width + 2*s,
+        contact_holder_edge_guide_height + 2*s
+        ]);
+
+    // lid
+    translate([
+        -handle_length -s,
+        -s -(handle_width - contact_holder_total_width)/2,
+        contact_holder_total_height-s
+    ])
+    difference()
+    {
+        cube([
+            handle_length+6*s,
+            handle_width+2*s,
+            (handle_height - contact_holder_total_height)/2 + 2*s
+        ]);
+    }
+    
+    // cutouts in sides for clips
+    let(
+        clip_length = handle_length/2,
+        clip_width = (handle_width - contact_holder_total_width)/6,
+        clip_height = contact_holder_total_height * 0.75
+    )
+    translate([
+        -handle_length * 0.75,
+        0,
+        contact_holder_total_height - clip_height
+    ])
+    {
+        translate([0, -(handle_width - contact_holder_total_width)/2 - s, 0])
+        cube([clip_length, clip_width, clip_height]);
+        
+        translate([0, handle_width/2 + contact_holder_total_width/2 - clip_width + s, 0])
+        cube([clip_length, clip_width, clip_height]);
+    }
+}
+}
+
+module plug_base() {
+    difference() {
+        plug();
+        plug_clamp();
+    }
+}
+
+//plug_base();
+plug_clamp();
 
 // Model the contacts too. Place them from center out.
 if ($preview)
