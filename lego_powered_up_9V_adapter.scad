@@ -212,7 +212,7 @@ module back_plate() {
         // Back key ridge
         for (lr=[-1,1])
         translate([
-            key_ridge_back_width/2-E,
+            end_wall_thickness/2-E,
             key_ridge_back_yoff * lr,
             key_ridge_back_zoff
         ])
