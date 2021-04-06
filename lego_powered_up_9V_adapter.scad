@@ -139,11 +139,11 @@ module contact() {
     cube([contact_depth, contact_width, contact_height], center=true);
 }
 
-module end_plate(end_plate_height) {
+module end_plate(end_plate_height, z_offset=0) {
     let(
         pack_cube_h = 2 * AAA_battery_diameter + pack_battery_height_gap
     )
-    translate([end_wall_thickness,0,0])
+    translate([end_wall_thickness*1.5+E,0,0])
     difference() {
         union() {
             intersection() {
@@ -154,7 +154,8 @@ module end_plate(end_plate_height) {
                     batteries_AAA(which=["t"]);
                 }
 
-                /* main body */
+                /* main body; requires an offset for rear */
+                translate([-end_wall_thickness/2,0,z_offset])
                 cube([
                         end_wall_thickness,
                         front_width_total,
@@ -165,14 +166,22 @@ module end_plate(end_plate_height) {
             };
             
             /* Square off bottom */
-            translate([0,0,-pack_cube_h/2+AAA_battery_diameter/3.05]) /* HACK */
-            cube([1, front_width_total, AAA_battery_diameter], center=true);
+            translate([
+                -end_wall_thickness,
+                -front_width_total/2,
+                -end_plate_height/2 + z_offset
+            ])
+            cube([1, front_width_total, AAA_battery_diameter], center=false);
         };
         
         /* clip notches */
         for (lr = [-1,1])
         translate([0, lr * (clip_gap/2), clip_inset])
-        translate([-end_wall_thickness/2-3*E,-clip_width/2,-end_plate_height + clip_inset])
+        translate([
+            -end_wall_thickness-3*E,
+            -clip_width/2,
+            -end_plate_height + clip_inset + z_offset
+        ])
         cube([0.5, clip_width, clip_inset]);
     }
 }
@@ -187,15 +196,15 @@ module front_plate() {
              
             // +ve contact (centre)
             translate([
-                0,
+                end_wall_thickness,
                 contact_positive_yoff,
-                front_height_total/2 - contact_height/2+E
+                front_height_total/2 - contact_height/2 + 2*E
             ])
             contact();
 
             // -ve contact (right)
             translate([
-                0,
+                end_wall_thickness,
                 contact_negative_yoff,
                 contact_negative_zoff
             ])
@@ -217,7 +226,7 @@ module back_plate() {
     union()
     {
         rotate([0,0,180])
-        end_plate(back_height_total);
+        end_plate(back_height_total, z_offset = (back_height_total-front_height_total)/2);
         
         // Back key ridge
         for (lr=[-1,1])
