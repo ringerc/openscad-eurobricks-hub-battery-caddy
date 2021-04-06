@@ -39,6 +39,8 @@ clip_gap = front_width_total - 2*(clip_inset*clip_width);
 clip_height = 3.0;
 // Gap between clip slide and notch
 clip_to_notch_height = 1.0;
+// How deep clip notch is. This determines the height of the notches too. They're a bit less than 2*clip_depth.
+clip_depth = 0.8;
 // Notch starts at +4mm, goes to +6mm, is same width as clip
 notch_height = 2.0;
 
@@ -175,14 +177,27 @@ module end_plate(end_plate_height, z_offset=0) {
         };
         
         /* clip notches */
-        for (lr = [-1,1])
-        translate([0, lr * (clip_gap/2), clip_inset])
-        translate([
-            -end_wall_thickness-3*E,
-            -clip_width/2,
-            -end_plate_height + clip_inset + z_offset
-        ])
-        cube([0.5, clip_width, clip_inset]);
+        translate([-end_wall_thickness-3*E, 0, 0])
+        {
+            let(
+                clip_curve_adj = 0.3,
+                clip_cyl_r = clip_depth + clip_curve_adj
+            )
+            for (lr = [-1,1])
+            translate([0, lr * (clip_gap/2), clip_inset])
+            translate([0, 0,
+                    -end_plate_height + clip_inset + z_offset])
+            {
+                translate([-0.3,0,0])
+                translate([0,clip_width/2,-clip_cyl_r+clip_inset])
+                rotate([90,0,0])
+                cylinder(r=clip_cyl_r,h=clip_width,$fs=0.3);
+                
+                rotate([0,-8,0])
+                translate([0,-clip_width/2, -clip_height])
+                cube([clip_depth, clip_width, clip_height*2]);
+            }
+        }
     }
 }
 
