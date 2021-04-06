@@ -99,8 +99,8 @@ module end_plate() {
         intersection() {
             translate([-1,0,-2])
             {
-                hull()
-                batteries(which=[ for (w = all_batteries) if (w != "t") w ]);
+                hull() batteries(which=["bl","tl","br","b"]);
+                hull() batteries(which=["br","tr","bl","b"]);
                 batteries(which=["t"]);
             }
 
