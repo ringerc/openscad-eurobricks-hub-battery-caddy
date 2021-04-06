@@ -18,10 +18,19 @@ pack_battery_height_gap = 1;
 end_wall_thickness = 1;
 base_thickness = 1;
 side_wall_thickness = 1;
-base_length_outside_to_outside = AAA_battery_length + end_wall_thickness * 2;
 
-front_height_total = 12.7 + 12.9;
+
+// The entire control box case exterior is 63.8 long
+
+//base_length_outside_to_outside = AAA_battery_length + end_wall_thickness * 2;
+base_length_outside_to_outside = 51.8;
+
+front_height_total = 25.6;
 front_width_total = 29.0;
+
+/* Back has a cutout lower than front, seems to be part of the keying */
+back_height_total = 24.1;
+back_width_total = front_width_total;
 
 clip_inset = 6.0;
 clip_width = 3.5;
@@ -33,26 +42,34 @@ clip_to_notch_height = 1.0;
 // Notch starts at +4mm, goes to +6mm, is same width as clip
 notch_height = 2.0;
 
-key_ridge_width = 1;
-key_ridge_depth = 1;
 
+/* Key ridge on front is actually 12.73 high but falls on a curve. So we'll make the key shorter. */
+key_ridge_front_height = 11.0; /* TODO measure */
+key_ridge_front_zoff = 1;
+key_ridge_front_width = 1;
+key_ridge_front_depth = 0.9;
+/* Its inner (left) edge is 12 - key_ridge_depth from the right edge. This offset is key ridge centre from box centre. */
+key_ridge_front_yoff = -(front_width_total/2 - (12.0  - key_ridge_front_depth/2));
 
-key_ridge_front_height = 9; /* TODO measure */
-key_ridge_front_zoff = 4; /* TODO measure */
-key_ridge_front_yoff = -4; /* TODO measure */
+/* back ridges are slightly bigger */
+key_ridge_back_width = 1.2;
+key_ridge_back_depth = 1.2;
+/* The real one follows the curve of the battery and is 14.8 high but we can just make it a bit shorter */
+key_ridge_back_height = 11.0;
+/* The inside of each ridge is 8mm from the corresponding edge */
+key_ridge_back_yoff = back_width_total / 2 - key_ridge_back_width - 8;
+key_ridge_back_zoff = -2; /* TODO measure */
 
-key_ridge_back_height = 12; /* TODO measure */
-key_ridge_back_yoff = 4; /* TODO measure */
-key_ridge_back_zoff = 0; /* TODO measure */
-
-contact_width = 4; /* TODO measure */
-contact_height = 6; /* TODO measure */
-contact_depth = 2; /* TODO measure */
+contact_width = 4.0;
+contact_height = 7.5;
+contact_depth = 2;
 
 contact_positive_yoff = 0; /* TODO measure */
 
-contact_negative_yoff = -8; /* TODO measure */
-contact_negative_zoff = 5; /* TODO measure */
+/* Right edge of contact cutout is 4.65 from right outside wall */
+contact_negative_yoff = -(front_width_total/2 - contact_width/2) + 4.65;
+
+contact_negative_zoff = 6; /* approx is ok here */
 
 E=0.001;
 
@@ -106,16 +123,20 @@ module batteries_9V() {
     9V();
 }
 
-module key_ridge(h) {
-    cube([key_ridge_width, key_ridge_depth, h]);
+module key_ridge_front() {
+    cube([key_ridge_front_width, key_ridge_front_depth, key_ridge_front_height]);
 }
+
+module key_ridge_back() {
+    cube([key_ridge_back_width, key_ridge_back_depth, key_ridge_back_height]);
+}
+
 
 module contact() {
     cube([contact_depth, contact_width, contact_height], center=true);
 }
 
-module end_plate() {
-    
+module end_plate(end_plate_height) {
     let(
         pack_cube_h = 2 * AAA_battery_diameter + pack_battery_height_gap
     )
@@ -132,7 +153,7 @@ module end_plate() {
             cube([
                     end_wall_thickness,
                     front_width_total,
-                    front_height_total
+                    end_plate_height
                 ],
                 center=true
             );
@@ -150,7 +171,7 @@ module front_plate() {
     {
         difference()
         {
-            end_plate();
+            end_plate(front_height_total);
              
             // +ve contact (centre)
             translate([
@@ -171,11 +192,11 @@ module front_plate() {
         
         // Front key ridge
         translate([
-            -end_wall_thickness - key_ridge_width/2 + E,
+            -end_wall_thickness - key_ridge_front_width/2 + E,
             key_ridge_front_yoff,
             key_ridge_front_zoff
         ])
-        key_ridge(key_ridge_front_height);
+        key_ridge_front();
     }
 }
 
@@ -183,16 +204,16 @@ module back_plate() {
     translate([end_wall_thickness/2,0,0])
     union()
     {
-        end_plate();
+        end_plate(back_height_total);
         
-        // Front key ridge
+        // Back key ridge
         for (lr=[-1,1])
         translate([
-            key_ridge_width/2-E,
+            key_ridge_back_width/2-E,
             key_ridge_back_yoff * lr,
             key_ridge_back_zoff
         ])
-        key_ridge(key_ridge_back_height);
+        key_ridge_back();
     }
 }
 
