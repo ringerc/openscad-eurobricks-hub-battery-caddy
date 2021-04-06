@@ -57,7 +57,7 @@ key_ridge_back_depth = 1.2;
 /* The real one follows the curve of the battery and is 14.8 high but we can just make it a bit shorter */
 key_ridge_back_height = 11.0;
 /* The inside of each ridge is 8mm from the corresponding edge */
-key_ridge_back_yoff = back_width_total / 2 - key_ridge_back_width - 8;
+key_ridge_back_yoff = back_width_total / 2 - key_ridge_back_width/2 - 8;
 key_ridge_back_zoff = -2;
 
 contact_width = 4.0;
@@ -143,28 +143,37 @@ module end_plate(end_plate_height) {
     let(
         pack_cube_h = 2 * AAA_battery_diameter + pack_battery_height_gap
     )
-    union() {
-        intersection() {
-            translate([-end_wall_thickness,0,-2])
-            {
-                hull()
-                batteries_AAA(which=[ for (w = all_batteries) if (w != "t") w ]);
-                batteries_AAA(which=["t"]);
-            }
+    translate([end_wall_thickness,0,0])
+    difference() {
+        union() {
+            intersection() {
+                translate([-end_wall_thickness,0,-2])
+                {
+                    hull()
+                    batteries_AAA(which=[ for (w = all_batteries) if (w != "t") w ]);
+                    batteries_AAA(which=["t"]);
+                }
 
-            /* main body */
-            cube([
-                    end_wall_thickness,
-                    front_width_total,
-                    end_plate_height
-                ],
-                center=true
-            );
+                /* main body */
+                cube([
+                        end_wall_thickness,
+                        front_width_total,
+                        end_plate_height
+                    ],
+                    center=true
+                );
+            };
+            
+            /* Square off bottom */
+            translate([0,0,-pack_cube_h/2+AAA_battery_diameter/3.05]) /* HACK */
+            cube([1, front_width_total, AAA_battery_diameter], center=true);
         };
         
-        /* Square off bottom */
-        translate([0,0,-pack_cube_h/2+AAA_battery_diameter/3])
-        cube([1, front_width_total, AAA_battery_diameter], center=true);
+        /* clip notches */
+        for (lr = [-1,1])
+        translate([0, lr * (clip_gap/2), clip_inset])
+        translate([-end_wall_thickness/2-3*E,-clip_width/2,-end_plate_height + clip_inset])
+        cube([0.5, clip_width, clip_inset]);
     }
 }
 
@@ -195,7 +204,7 @@ module front_plate() {
         
         // Front key ridge
         translate([
-            -end_wall_thickness - key_ridge_front_width/2 + E,
+            - key_ridge_front_width/2 + E,
             key_ridge_front_yoff,
             key_ridge_front_zoff
         ])
@@ -207,32 +216,34 @@ module back_plate() {
     translate([end_wall_thickness/2,0,0])
     union()
     {
+        rotate([0,0,180])
         end_plate(back_height_total);
         
         // Back key ridge
         for (lr=[-1,1])
         translate([
-            end_wall_thickness/2-E,
+            -end_wall_thickness/2-E,
             key_ridge_back_yoff * lr,
             key_ridge_back_zoff
         ])
+        translate([0,-key_ridge_back_depth/2,0])
         key_ridge_back();
     }
 }
 
 module base_plate() {
-    translate([-end_wall_thickness, -front_width_total/2, 0])
+    translate([end_wall_thickness+2*E, -front_width_total/2, 0])
     cube([
-        base_length_outside_to_outside + end_wall_thickness*2-2*E,
-        front_width_total,
+        base_length_outside_to_outside - 2*end_wall_thickness - 8*E,
+        front_width_total-2*E,
         base_thickness
     ]);
 }
 
 module sidewall() {
-    translate([-end_wall_thickness, -side_wall_thickness/2, 0])
+    translate([end_wall_thickness, -side_wall_thickness/2, 0])
     cube([
-        base_length_outside_to_outside + end_wall_thickness*2-2*E,
+        base_length_outside_to_outside - 2*end_wall_thickness -2*E,
         side_wall_thickness,
         front_height_total/2
     ]);
