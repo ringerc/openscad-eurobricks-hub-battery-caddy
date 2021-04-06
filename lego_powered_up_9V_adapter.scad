@@ -56,16 +56,20 @@ contact_negative_zoff = 5; /* TODO measure */
 
 E=0.001;
 
+/* Preview using AAA or 9V */
+//preview_with_aaa = true;
+preview_with_aaa = false;
+
+use <uploads_f1_eb_f2_54_dd_Batteries.scad>;
+
 module AAA_cell() {
-        rotate([0,90,0])
-        cylinder(
-            h=AAA_battery_length,
-            d=AAA_battery_diameter);
+    rotate([0,90,0])
+    AAA();
 };
 
 all_batteries = ["t","b","bl","br","tl","tr"];
 
-module batteries(which=all_batteries)
+module batteries_AAA(which=all_batteries)
 {
     let(batt_space = AAA_battery_diameter + battery_diameter_tolerance)
     for (pack_zoff = [0, AAA_battery_diameter + pack_battery_height_gap])
@@ -93,6 +97,15 @@ module batteries(which=all_batteries)
     }
 }
 
+module batteries_9V() {
+    translate([base_length_outside_to_outside,0,0])
+    rotate([180,0,0])
+    translate([-1,-11.5,8])
+    rotate([0,-90,0])
+    rotate([0,0,90])
+    9V();
+}
+
 module key_ridge(h) {
     cube([key_ridge_width, key_ridge_depth, h]);
 }
@@ -111,8 +124,8 @@ module end_plate() {
             translate([-end_wall_thickness,0,-2])
             {
                 hull()
-                batteries(which=[ for (w = all_batteries) if (w != "t") w ]);
-                batteries(which=["t"]);
+                batteries_AAA(which=[ for (w = all_batteries) if (w != "t") w ]);
+                batteries_AAA(which=["t"]);
             }
 
             /* main body */
@@ -200,16 +213,6 @@ module sidewall() {
         front_height_total/2
     ]);
 }
-        
-/* Show batteries */
-%
-color("blue",0.2)
-translate([
-    (base_length_outside_to_outside - AAA_battery_length)/2,
-    0,
-    -2
-])
-batteries();
 
 union() {
     /* Front end plate */
@@ -230,4 +233,19 @@ union() {
         -front_height_total/2
     ])
     sidewall();
+}
+
+
+/* Show batteries */
+%
+color("blue",0.2)
+translate([
+    (base_length_outside_to_outside - AAA_battery_length)/2,
+    0,
+    -2
+])
+if (preview_with_aaa) {
+    batteries_AAA();
+} else {
+    batteries_9V();
 }
