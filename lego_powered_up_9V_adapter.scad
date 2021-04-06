@@ -74,7 +74,8 @@ contact_negative_yoff = -(front_width_total/2 - contact_width/2) + 4.65;
 contact_negative_zoff = 6; /* approx is ok here */
 
 battery_standoff_feet_height = 7;
-battery_standoff_feet_d = 2;
+battery_standoff_feet_top_d = 1.5;
+battery_standoff_feet_base_d = 3;
 
 E=0.001;
 
@@ -306,7 +307,12 @@ union() {
         0,
         -front_height_total/2 + base_thickness - E
     ])
-    cylinder(h=battery_standoff_feet_height, d=battery_standoff_feet_d);
+    cylinder(
+        h=battery_standoff_feet_height,
+        d1=battery_standoff_feet_base_d,
+        d2=battery_standoff_feet_top_d,
+        $fs=1
+    );
 }
 
 
