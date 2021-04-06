@@ -15,9 +15,13 @@ battery_diameter_tolerance = 0.5;
 // Z-gap between batteries in the layers
 pack_battery_height_gap = 1;
 
+end_wall_thickness = 1;
+base_thickness = 1;
+side_wall_thickness = 1;
+base_length_outside_to_outside = AAA_battery_length + end_wall_thickness * 2;
+
 front_height_total = 12.7 + 12.9;
 front_width_total = 29.0;
-
 
 clip_inset = 6.0;
 clip_width = 3.5;
@@ -32,11 +36,14 @@ notch_height = 2.0;
 key_ridge_width = 1;
 key_ridge_depth = 1;
 
+
 key_ridge_front_height = 9; /* TODO measure */
 key_ridge_front_zoff = 4; /* TODO measure */
 key_ridge_front_yoff = -4; /* TODO measure */
 
 key_ridge_back_height = 12; /* TODO measure */
+key_ridge_back_yoff = 4; /* TODO measure */
+key_ridge_back_zoff = 0; /* TODO measure */
 
 contact_width = 4; /* TODO measure */
 contact_height = 6; /* TODO measure */
@@ -95,9 +102,13 @@ module contact() {
 }
 
 module end_plate() {
+    
+    let(
+        pack_cube_h = 2 * AAA_battery_diameter + pack_battery_height_gap
+    )
     union() {
         intersection() {
-            translate([-1,0,-2])
+            translate([-end_wall_thickness,0,-2])
             {
                 hull()
                 batteries(which=[ for (w = all_batteries) if (w != "t") w ]);
@@ -105,49 +116,118 @@ module end_plate() {
             }
 
             /* main body */
-            let(
-                pack_cube_h = 2 * AAA_battery_diameter + pack_battery_height_gap
-            )
             cube([
-                    1,
+                    end_wall_thickness,
                     front_width_total,
                     front_height_total
                 ],
                 center=true
             );
         };
+        
+        /* Square off bottom */
+        translate([0,0,-pack_cube_h/2+AAA_battery_diameter/3])
+        cube([1, front_width_total, AAA_battery_diameter], center=true);
     }
 }
-        
-/* Show batteries */
-%translate([0,0,-2]) batteries();
 
-union()
-{
-    difference()
+module front_plate() {
+    translate([-end_wall_thickness/2,0,0])
+    union()
+    {
+        difference()
+        {
+            end_plate();
+             
+            // +ve contact (centre)
+            translate([
+                0,
+                contact_positive_yoff,
+                front_height_total/2 - contact_height/2+E
+            ])
+            contact();
+
+            // -ve contact (right)
+            translate([
+                0,
+                contact_negative_yoff,
+                contact_negative_zoff
+            ])
+            contact();
+        }
+        
+        // Front key ridge
+        translate([
+            -end_wall_thickness - key_ridge_width/2 + E,
+            key_ridge_front_yoff,
+            key_ridge_front_zoff
+        ])
+        key_ridge(key_ridge_front_height);
+    }
+}
+
+module back_plate() {
+    translate([end_wall_thickness/2,0,0])
+    union()
     {
         end_plate();
         
-
-    // +ve contact (centre)
-    translate([
-        0,
-        contact_positive_yoff,
-        front_height_total/2 - contact_height/2+E
-    ])
-    contact();
-    
-    // -ve contact (right)
-    translate([
-        0,
-        contact_negative_yoff,
-        contact_negative_zoff
-    ])
-    contact();
+        // Front key ridge
+        for (lr=[-1,1])
+        translate([
+            key_ridge_width/2-E,
+            key_ridge_back_yoff * lr,
+            key_ridge_back_zoff
+        ])
+        key_ridge(key_ridge_back_height);
     }
+}
+
+module base_plate() {
+    translate([-end_wall_thickness, -front_width_total/2, 0])
+    cube([
+        base_length_outside_to_outside + end_wall_thickness*2-2*E,
+        front_width_total,
+        base_thickness
+    ]);
+}
+
+module sidewall() {
+    translate([-end_wall_thickness, -side_wall_thickness/2, 0])
+    cube([
+        base_length_outside_to_outside + end_wall_thickness*2-2*E,
+        side_wall_thickness,
+        front_height_total/2
+    ]);
+}
+        
+/* Show batteries */
+%
+color("blue",0.2)
+translate([
+    (base_length_outside_to_outside - AAA_battery_length)/2,
+    0,
+    -2
+])
+batteries();
+
+union() {
+    /* Front end plate */
+    front_plate();
     
-    // Front key ridge
-    translate([-1.5-E,key_ridge_front_yoff,key_ridge_front_zoff])
-    key_ridge(key_ridge_front_height);
+    /* Rear end plate */
+    translate([base_length_outside_to_outside, 0, 0])
+    back_plate();
     
+    /* Base */
+    translate([0,0,-front_height_total/2])
+    base_plate();
+    
+    for(lr = [-1, 1])
+    translate([
+        0,
+        (front_width_total/2 - side_wall_thickness/2) * lr,
+        -front_height_total/2
+    ])
+    sidewall();
 }
