@@ -58,18 +58,21 @@ key_ridge_back_depth = 1.2;
 key_ridge_back_height = 11.0;
 /* The inside of each ridge is 8mm from the corresponding edge */
 key_ridge_back_yoff = back_width_total / 2 - key_ridge_back_width - 8;
-key_ridge_back_zoff = -2; /* TODO measure */
+key_ridge_back_zoff = -2;
 
 contact_width = 4.0;
 contact_height = 7.5;
 contact_depth = 2;
 
-contact_positive_yoff = 0; /* TODO measure */
+contact_positive_yoff = 0;
 
 /* Right edge of contact cutout is 4.65 from right outside wall */
 contact_negative_yoff = -(front_width_total/2 - contact_width/2) + 4.65;
 
 contact_negative_zoff = 6; /* approx is ok here */
+
+battery_standoff_feet_height = 7;
+battery_standoff_feet_d = 2;
 
 E=0.001;
 
@@ -117,7 +120,7 @@ module batteries_AAA(which=all_batteries)
 module batteries_9V() {
     translate([base_length_outside_to_outside,0,0])
     rotate([180,0,0])
-    translate([-1,-11.5,8])
+    translate([-5,-11.5,8])
     rotate([0,-90,0])
     rotate([0,0,90])
     9V();
@@ -247,6 +250,7 @@ union() {
     translate([0,0,-front_height_total/2])
     base_plate();
     
+    /* Side walls */
     for(lr = [-1, 1])
     translate([
         0,
@@ -254,6 +258,20 @@ union() {
         -front_height_total/2
     ])
     sidewall();
+    
+    /* Feet to raise 9v battery up, since we want it in the top */
+    for (lr = [-1,0,1], fb = [0,0.5,1])
+    translate([
+        base_length_outside_to_outside*0.8 * fb,
+        front_width_total/3 * lr,
+        0
+    ])
+    translate([
+        base_length_outside_to_outside*0.1,
+        0,
+        -front_height_total/2 + base_thickness - E
+    ])
+    cylinder(h=battery_standoff_feet_height, d=battery_standoff_feet_d);
 }
 
 
@@ -268,5 +286,6 @@ translate([
 if (preview_with_aaa) {
     batteries_AAA();
 } else {
+    translate([0,0,battery_standoff_feet_height])
     batteries_9V();
 }
