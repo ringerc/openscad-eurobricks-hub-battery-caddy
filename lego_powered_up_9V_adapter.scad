@@ -214,7 +214,7 @@ module front_plate() {
         // Front key ridge
         translate([
             - key_ridge_front_width/2 + E,
-            key_ridge_front_yoff,
+            key_ridge_front_yoff - key_ridge_front_depth/2,
             key_ridge_front_zoff
         ])
         key_ridge_front();
@@ -232,7 +232,7 @@ module back_plate() {
         for (lr=[-1,1])
         translate([
             -end_wall_thickness/2-E,
-            key_ridge_back_yoff * lr,
+            (key_ridge_back_yoff + key_ridge_back_depth) * lr,
             key_ridge_back_zoff
         ])
         translate([0,-key_ridge_back_depth/2,0])
