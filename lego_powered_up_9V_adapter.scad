@@ -1,5 +1,25 @@
 /*
  * 9V cell adapter for lego powered up trains. Front has contacts.
+ *
+ * IT WORKS!!!!!111!!!
+ *
+ * Move 9V batt as far left (negative terminal to edge) as possible.
+ *
+ * "U" shaped +ve contact guide. Make out of copper plate, wire, whatever, with top folded over.
+ *
+ * Reinforce behind clips.
+ *
+ * "I" shaped -ve contact guide.
+ *
+ * Needs base fix - scallop base curve properly.
+ *
+ * Slight corner rounding for printability?
+ *
+ * Keying for 9V so can't fit wrong way (-ve too wide for +ve channel)
+ *
+ * Some way to retain contacts? Can always glue but would be nice to have retention.
+ *
+ * Isolator between 9V terminals, protect contacts
  */
  
  /*
@@ -19,6 +39,7 @@ end_wall_thickness = 1;
 base_thickness = 1;
 side_wall_thickness = 1;
 
+base_plate_zoff = 5;
 
 // The entire control box case exterior is 63.8 long
 
@@ -73,9 +94,8 @@ contact_negative_yoff = -(front_width_total/2 - contact_width/2) + 4.65;
 
 contact_negative_zoff = 6; /* approx is ok here */
 
-battery_standoff_feet_height = 7;
-battery_standoff_feet_top_d = 1.5;
-battery_standoff_feet_base_d = 3;
+feet_top_d = 1.5;
+feet_base_d = 3;
 
 E=0.001;
 
@@ -129,6 +149,7 @@ module batteries_9V() {
     9V();
 }
 
+/* TODO gentle slope in bottom overhang of key items */
 module key_ridge_front() {
     cube([key_ridge_front_width, key_ridge_front_depth, key_ridge_front_height]);
 }
@@ -257,12 +278,31 @@ module back_plate() {
 }
 
 module base_plate() {
-    translate([end_wall_thickness+2*E, -front_width_total/2, 0])
+    translate([end_wall_thickness+2*E, -front_width_total/2, base_plate_zoff])
     cube([
         base_length_outside_to_outside - 2*end_wall_thickness - 8*E,
         front_width_total-2*E,
         base_thickness
     ]);
+    
+    /* Feet to raise 9v battery up, since we want it in the top */
+    for (lr = [-1,1], fb = [0,0.5,1])
+    translate([
+        base_length_outside_to_outside*0.6 * fb,
+        front_width_total/3.2 * lr,
+        0
+    ])
+    translate([
+        base_length_outside_to_outside*0.2,
+        0,
+        0
+    ])
+    cylinder(
+        h=base_plate_zoff + E,
+        d2=feet_base_d,
+        d1=feet_top_d,
+        $fs=1
+    );
 }
 
 module sidewall() {
@@ -295,24 +335,6 @@ union() {
     ])
     sidewall();
     
-    /* Feet to raise 9v battery up, since we want it in the top */
-    for (lr = [-1,0,1], fb = [0,0.5,1])
-    translate([
-        base_length_outside_to_outside*0.8 * fb,
-        front_width_total/3 * lr,
-        0
-    ])
-    translate([
-        base_length_outside_to_outside*0.1,
-        0,
-        -front_height_total/2 + base_thickness - E
-    ])
-    cylinder(
-        h=battery_standoff_feet_height,
-        d1=battery_standoff_feet_base_d,
-        d2=battery_standoff_feet_top_d,
-        $fs=1
-    );
 }
 
 
@@ -327,6 +349,6 @@ translate([
 if (preview_with_aaa) {
     batteries_AAA();
 } else {
-    translate([0,0,battery_standoff_feet_height])
+    translate([0,0,base_plate_zoff + base_thickness])
     batteries_9V();
 }
