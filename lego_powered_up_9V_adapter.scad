@@ -254,66 +254,79 @@ module front_plate() {
         // Add a cutout for the +ve contact.
         let(
             batt_key_thickness = 2.6,
+            batt_key_height = front_height_total-contact_height,
             contact_guide_thickness = 1.5,
             contact_guide_width = 13
         )
-        difference()
-        {
-            union()
+        union() {
+            difference()
             {
-                /* centre guide block */
                 translate([
                     batt_key_thickness / 2 + end_wall_thickness - E,
-                    - 0.3,
+                    0,
                     - contact_height/2
                 ])
                 cube([
                     batt_key_thickness,
-                    5.6,
-                    front_height_total-contact_height
+                    front_width_total,
+                    batt_key_height
                 ], center=true);
                 
-                /* +ve guide block (right) */
+                /* Slot for +ve terminal */
+                let(positive_terminal_slot_height= batt_key_height-base_plate_zoff-base_thickness-2.3+E)
                 translate([
-                    batt_key_thickness / 2 + end_wall_thickness - E,
-                    (front_width_total - 5.5)/2 - E,
-                    - contact_height/2
+                     batt_key_thickness / 2 + end_wall_thickness - 2*E,
+                     5.75,
+                     batt_key_height - positive_terminal_slot_height*1.5
                 ])
                 cube([
-                    batt_key_thickness,
-                    5.5,
-                    front_height_total-contact_height
+                    batt_key_thickness+3*E,
+                    7,
+                    positive_terminal_slot_height
                 ], center=true);
                 
-                /* -ve guide block (left) */
+                /* Slot for +ve contact */
                 translate([
-                    batt_key_thickness / 2 + end_wall_thickness - E,
-                    -(front_width_total - 3)/2 + E,
-                    - contact_height/2
+                    contact_guide_thickness/2 + end_wall_thickness,
+                    contact_guide_width/2 - 2,
+                    2
                 ])
                 cube([
-                    batt_key_thickness,
-                    3,
-                    front_height_total-contact_height
+                    contact_guide_thickness,
+                    contact_guide_width,
+                    9
                 ], center=true);
                 
-                /* Retainer for under -ve contact */
+                /* Slot for -ve terminal */
+                let(negative_terminal_slot_height= batt_key_height-base_plate_zoff-base_thickness-1.5+E)
+                translate([
+                     batt_key_thickness / 2 + end_wall_thickness - 2*E,
+                     -7.5,
+                     batt_key_height - negative_terminal_slot_height*1.5
+                ])
+                cube([
+                    batt_key_thickness+3*E,
+                    9,
+                    negative_terminal_slot_height
+                ], center=true);
                 
+                /* Slot to retain -ve contact */
+                translate([
+                    contact_guide_thickness/2 + end_wall_thickness,
+                    -8,
+                    2
+                ])
+                cube([
+                    contact_guide_thickness,
+                    10,
+                    12
+                ], center=true);
             };
-            
-            /* Slot for +ve contact */
-            translate([
-                contact_guide_thickness/2 + end_wall_thickness,
-                contact_guide_width/2 - 2,
-                2
-            ])
-            cube([
-                contact_guide_thickness,
-                contact_guide_width,
-                7
-            ], center=true);
-           
-        }
+            /* Add a litle ridge to help the -ve contact stay in place */
+            translate([end_wall_thickness+0.5-E,-3.925,5.23])
+            rotate([0,45,0])
+            cube([1,3.85,1],center=true);
+        };
     }
 }
 
