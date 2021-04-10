@@ -9,17 +9,9 @@
  *
  * Reinforce behind clips.
  *
- * "I" shaped -ve contact guide.
- *
  * Needs base fix - scallop base curve properly.
  *
  * Slight corner rounding for printability?
- *
- * Keying for 9V so can't fit wrong way (-ve too wide for +ve channel)
- *
- * Some way to retain contacts? Can always glue but would be nice to have retention.
- *
- * Isolator between 9V terminals, protect contacts
  */
  
  /*
@@ -62,7 +54,7 @@ clip_height = 3.0;
 // Gap between clip slide and notch
 clip_to_notch_height = 1.0;
 // How deep clip notch is. This determines the height of the notches too. They're a bit less than 2*clip_depth.
-clip_depth = 0.8;
+clip_depth = 0.5;
 // Notch starts at +4mm, goes to +6mm, is same width as clip
 notch_height = 2.0;
 
@@ -257,6 +249,71 @@ module front_plate() {
             key_ridge_front_zoff
         ])
         key_ridge_front();
+        
+        // Key to prevent battery insertion upside down.
+        // Add a cutout for the +ve contact.
+        let(
+            batt_key_thickness = 2.6,
+            contact_guide_thickness = 1.5,
+            contact_guide_width = 13
+        )
+        difference()
+        {
+            union()
+            {
+                /* centre guide block */
+                translate([
+                    batt_key_thickness / 2 + end_wall_thickness - E,
+                    - 0.3,
+                    - contact_height/2
+                ])
+                cube([
+                    batt_key_thickness,
+                    5.6,
+                    front_height_total-contact_height
+                ], center=true);
+                
+                /* +ve guide block (right) */
+                translate([
+                    batt_key_thickness / 2 + end_wall_thickness - E,
+                    (front_width_total - 5.5)/2 - E,
+                    - contact_height/2
+                ])
+                cube([
+                    batt_key_thickness,
+                    5.5,
+                    front_height_total-contact_height
+                ], center=true);
+                
+                /* -ve guide block (left) */
+                translate([
+                    batt_key_thickness / 2 + end_wall_thickness - E,
+                    -(front_width_total - 3)/2 + E,
+                    - contact_height/2
+                ])
+                cube([
+                    batt_key_thickness,
+                    3,
+                    front_height_total-contact_height
+                ], center=true);
+                
+                /* Retainer for under -ve contact */
+                
+            };
+            
+            /* Slot for +ve contact */
+            translate([
+                contact_guide_thickness/2 + end_wall_thickness,
+                contact_guide_width/2 - 2,
+                2
+            ])
+            cube([
+                contact_guide_thickness,
+                contact_guide_width,
+                7
+            ], center=true);
+           
+        }
     }
 }
 
