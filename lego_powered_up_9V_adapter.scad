@@ -41,6 +41,7 @@ side_wall_thickness = 1;
 
 base_plate_zoff = 5;
 
+
 // The entire control box case exterior is 63.8 long
 
 //base_length_outside_to_outside = AAA_battery_length + end_wall_thickness * 2;
@@ -64,7 +65,6 @@ clip_to_notch_height = 1.0;
 clip_depth = 0.8;
 // Notch starts at +4mm, goes to +6mm, is same width as clip
 notch_height = 2.0;
-
 
 /* Key ridge on front is actually 12.73 high but falls on a curve. So we'll make the key shorter. */
 key_ridge_front_height = 11.0; /* TODO measure */
@@ -98,6 +98,8 @@ feet_top_d = 1.5;
 feet_base_d = 3;
 
 E=0.001;
+
+side_wall_height = front_height_total/2;
 
 /* Preview using AAA or 9V */
 //preview_with_aaa = true;
@@ -310,7 +312,7 @@ module sidewall() {
     cube([
         base_length_outside_to_outside - 2*end_wall_thickness -2*E,
         side_wall_thickness,
-        front_height_total/2
+        side_wall_height
     ]);
 }
 
@@ -335,12 +337,20 @@ union() {
     ])
     sidewall();
     
+    /* The right sidewall, with the +ve terminal, needs some spacers to position the battery */
+    translate([0, (front_width_total/2 - side_wall_thickness*2)+E, 0])
+    for (i = [0 : 3])
+    translate([
+        base_length_outside_to_outside * (0.2 + i*0.2),
+        0,
+        -side_wall_height + base_plate_zoff - E])
+    cube([1,1,side_wall_height - base_plate_zoff]);
 }
 
 
 /* Show batteries */
 %
-color("blue",0.2)
+color("blue",0.4)
 translate([
     (base_length_outside_to_outside - AAA_battery_length)/2,
     0,
@@ -349,6 +359,6 @@ translate([
 if (preview_with_aaa) {
     batteries_AAA();
 } else {
-    translate([0,0,base_plate_zoff + base_thickness])
+    translate([0,-1,base_plate_zoff + base_thickness])
     batteries_9V();
 }
