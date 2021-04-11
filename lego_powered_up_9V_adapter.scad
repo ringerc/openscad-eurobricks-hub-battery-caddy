@@ -27,7 +27,9 @@ battery_diameter_tolerance = 0.5;
 // Z-gap between batteries in the layers
 pack_battery_height_gap = 1;
 
-end_wall_thickness = 1;
+end_wall_thickness_front = 3.5 ;
+end_wall_thickness_back = 1;
+end_walls_thickness_total = end_wall_thickness_front + end_wall_thickness_back;
 base_thickness = 1;
 side_wall_thickness = 1;
 
@@ -35,8 +37,6 @@ base_plate_zoff = 5;
 
 
 // The entire control box case exterior is 63.8 long
-
-//base_length_outside_to_outside = AAA_battery_length + end_wall_thickness * 2;
 base_length_outside_to_outside = 51.8;
 
 front_height_total = 25.6;
@@ -77,7 +77,7 @@ key_ridge_back_zoff = -2;
 
 contact_width = 4.0;
 contact_height = 7.5;
-contact_depth = 2;
+contact_depth = 4.1;
 
 contact_positive_yoff = 0;
 
@@ -157,7 +157,7 @@ module contact() {
     cube([contact_depth, contact_width, contact_height], center=true);
 }
 
-module end_plate(end_plate_height, z_offset=0) {
+module end_plate(end_plate_height, end_wall_thickness, z_offset=0) {
     let(
         pack_cube_h = 2 * AAA_battery_diameter + pack_battery_height_gap
     )
@@ -218,16 +218,16 @@ module end_plate(end_plate_height, z_offset=0) {
 }
 
 module front_plate() {
-    translate([-end_wall_thickness/2,0,0])
+    translate([-end_wall_thickness_front/2,0,0])
     union()
     {
         difference()
         {
-            end_plate(front_height_total);
+            end_plate(front_height_total, end_wall_thickness_front);
              
             // +ve contact (centre)
             translate([
-                end_wall_thickness,
+                end_wall_thickness_front,
                 contact_positive_yoff,
                 front_height_total/2 - contact_height/2 + 2*E
             ])
@@ -235,59 +235,59 @@ module front_plate() {
 
             // -ve contact (right)
             translate([
-                end_wall_thickness,
+                end_wall_thickness_front,
                 contact_negative_yoff,
                 contact_negative_zoff
             ])
             contact();
-        }
         
-        // Front key ridge
-        translate([
-            - key_ridge_front_width/2 + E,
-            key_ridge_front_yoff - key_ridge_front_depth/2,
-            key_ridge_front_zoff
-        ])
-        key_ridge_front();
-        
-        // Key to prevent battery insertion upside down.
-        // Add a cutout for the +ve contact.
-        let(
-            batt_key_thickness = 2.6,
-            batt_key_height = front_height_total-contact_height,
-            contact_guide_thickness = 1.5,
-            contact_guide_width = 13
-        )
-        union() {
-            difference()
-            {
+            // Key to prevent battery insertion upside down.
+            // Add a cutout for the +ve contact.
+            let(
+                batt_key_slot_depth = 2,
+                positive_terminal_slot_height = front_height_total - base_plate_zoff - base_thickness + E,
+                positive_terminal_slot_zoff = 12.6,
+                negative_terminal_slot_height = front_height_total - base_plate_zoff - base_thickness + E,
+                negative_terminal_slot_zoff = 10.5,
+                contact_guide_thickness = 1.5,
+                contact_guide_width = 13
+                
+            )
+            translate([0, 0, 0])
+            {   
+                /* Slot for +ve battery terminal */
                 translate([
-                    batt_key_thickness / 2 + end_wall_thickness - E,
+                    2*end_wall_thickness_front - batt_key_slot_depth + E,
                     0,
-                    - contact_height/2
-                ])
-                cube([
-                    batt_key_thickness,
-                    front_width_total,
-                    batt_key_height
-                ], center=true);
+                    base_plate_zoff + base_thickness])
+                {
+                    translate([
+                         0,
+                         5.75,
+                         - positive_terminal_slot_height/2  + positive_terminal_slot_zoff
+                    ])
+                    cube([
+                        end_wall_thickness_front+3*E,
+                        6.2,
+                        positive_terminal_slot_height
+                    ], center=true);
+                    
+                    /* Slot for -ve battery terminal */
+                    translate([
+                         0,
+                         -7.5,
+                         - negative_terminal_slot_height/2 + negative_terminal_slot_zoff
+                    ])
+                    cube([
+                        end_wall_thickness_front+3*E,
+                        9,
+                        negative_terminal_slot_height
+                    ], center=true);
+                };
                 
-                /* Slot for +ve terminal */
-                let(positive_terminal_slot_height= batt_key_height-base_plate_zoff-base_thickness-2.3+E)
+                /* Slot for +ve contact plate */
                 translate([
-                     batt_key_thickness / 2 + end_wall_thickness - 2*E,
-                     5.75,
-                     batt_key_height - positive_terminal_slot_height*1.5
-                ])
-                cube([
-                    batt_key_thickness+3*E,
-                    7,
-                    positive_terminal_slot_height
-                ], center=true);
-                
-                /* Slot for +ve contact */
-                translate([
-                    contact_guide_thickness/2 + end_wall_thickness,
+                    contact_guide_thickness/2 + end_wall_thickness_front,
                     contact_guide_width/2 - 2,
                     2
                 ])
@@ -297,47 +297,36 @@ module front_plate() {
                     9
                 ], center=true);
                 
-                /* Slot for -ve terminal */
-                let(negative_terminal_slot_height= batt_key_height-base_plate_zoff-base_thickness-1.5+E)
-                translate([
-                     batt_key_thickness / 2 + end_wall_thickness - 2*E,
-                     -7.5,
-                     batt_key_height - negative_terminal_slot_height*1.5
-                ])
-                cube([
-                    batt_key_thickness+3*E,
-                    9,
-                    negative_terminal_slot_height
-                ], center=true);
-                
-                /* Slot to retain -ve contact */
-                translate([
-                    contact_guide_thickness/2 + end_wall_thickness,
-                    -8,
-                    2
-                ])
-                cube([
-                    contact_guide_thickness,
-                    10,
-                    12
-                ], center=true);
-            };
-            
-        };
+                /* Slot for -ve contact guide TODO */
+                /* XXX */
+                        
+            }
+        }
+        
     }
+
+    // Front key ridge
+    translate([
+        - key_ridge_front_width + E,
+        key_ridge_front_yoff - key_ridge_front_depth/2,
+        key_ridge_front_zoff
+    ])
+    key_ridge_front();
+    
+    
 }
 
 module back_plate() {
-    translate([end_wall_thickness/2,0,0])
+    translate([end_wall_thickness_back/2,0,0])
     union()
     {
         rotate([0,0,180])
-        end_plate(back_height_total, z_offset = (back_height_total-front_height_total)/2);
+        end_plate(back_height_total, end_wall_thickness_back, z_offset = (back_height_total-front_height_total)/2);
         
         // Back key ridge
         for (lr=[-1,1])
         translate([
-            -end_wall_thickness/2-E,
+            -end_wall_thickness_back/2-E,
             (key_ridge_back_yoff + key_ridge_back_depth) * lr,
             key_ridge_back_zoff
         ])
@@ -347,18 +336,18 @@ module back_plate() {
 }
 
 module base_plate() {
-    translate([end_wall_thickness+2*E, -front_width_total/2, base_plate_zoff])
+    translate([end_walls_thickness_total+2*E, -front_width_total/2, base_plate_zoff])
     cube([
-        base_length_outside_to_outside - 2*end_wall_thickness - 8*E,
+        base_length_outside_to_outside - end_walls_thickness_total - 8*E,
         front_width_total-2*E,
         base_thickness
     ]);
 }
 
 module sidewall() {
-    translate([end_wall_thickness, -side_wall_thickness/2, 0])
+    translate([end_wall_thickness_front, -side_wall_thickness/2, 0])
     cube([
-        base_length_outside_to_outside - 2*end_wall_thickness -2*E,
+        base_length_outside_to_outside - end_walls_thickness_total -2*E,
         side_wall_thickness,
         side_wall_height
     ]);
@@ -407,7 +396,7 @@ union() {
     ])
     for (i = [0 : 4])
     translate([
-        base_length_outside_to_outside * (0.2 + i*0.2) - end_wall_thickness*2,
+        base_length_outside_to_outside * (0.2 + i*0.2) - end_walls_thickness_total,
         0,
         -side_wall_height + base_plate_zoff - E])
     cube([1,1,side_wall_height - base_plate_zoff]);
