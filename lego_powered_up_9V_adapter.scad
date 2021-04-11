@@ -322,10 +322,7 @@ module front_plate() {
                     12
                 ], center=true);
             };
-            /* Add a litle ridge to help the -ve contact stay in place */
-            translate([end_wall_thickness+0.5-E,-3.925,5.23])
-            rotate([0,45,0])
-            cube([1,3.85,1],center=true);
+            
         };
     }
 }
@@ -356,25 +353,6 @@ module base_plate() {
         front_width_total-2*E,
         base_thickness
     ]);
-    
-    /* Feet to raise 9v battery up, since we want it in the top */
-    for (lr = [-1,1], fb = [0,0.5,1])
-    translate([
-        base_length_outside_to_outside*0.6 * fb,
-        front_width_total/3.2 * lr,
-        0
-    ])
-    translate([
-        base_length_outside_to_outside*0.2,
-        0,
-        0
-    ])
-    cylinder(
-        h=base_plate_zoff + E,
-        d2=feet_base_d,
-        d1=feet_top_d,
-        $fs=1
-    );
 }
 
 module sidewall() {
@@ -407,11 +385,29 @@ union() {
     ])
     sidewall();
     
-    /* The right sidewall, with the +ve terminal, needs some spacers to position the battery */
-    translate([0, (front_width_total/2 - side_wall_thickness*2)+E, 0])
-    for (i = [0 : 3])
+    /* supports for rear side wall */
+    let(support_height = side_wall_height - base_plate_zoff - base_thickness - 1.5)
+    for(lr = [-1, 1])
     translate([
-        base_length_outside_to_outside * (0.2 + i*0.2),
+        base_length_outside_to_outside - side_wall_thickness + E,
+        lr * (front_width_total - side_wall_thickness)/2,
+        -E*2
+    ])
+    translate([0, side_wall_thickness/2, 0])
+    scale([support_height,1,support_height])
+    rotate([90,-90,0])
+    linear_extrude(side_wall_thickness)
+    polygon(points=[[0,0],[0,1],[1,0]]);
+    
+    /* The right sidewall, with the +ve terminal, needs some spacers to position the battery */
+    translate([
+        0,
+        (front_width_total/2 - side_wall_thickness*2)+E,
+        0
+    ])
+    for (i = [0 : 4])
+    translate([
+        base_length_outside_to_outside * (0.2 + i*0.2) - end_wall_thickness*2,
         0,
         -side_wall_height + base_plate_zoff - E])
     cube([1,1,side_wall_height - base_plate_zoff]);
