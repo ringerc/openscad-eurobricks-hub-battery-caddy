@@ -3,14 +3,6 @@
  *
  * IT WORKS!!!!!111!!!
  *
- * Move 9V batt as far left (negative terminal to edge) as possible.
- *
- * "U" shaped +ve contact guide. Make out of copper plate, wire, whatever, with top folded over.
- *
- * Reinforce behind clips.
- *
- * Needs base fix - scallop base curve properly.
- *
  * Slight corner rounding for printability?
  */
  
@@ -27,7 +19,7 @@ battery_diameter_tolerance = 0.5;
 // Z-gap between batteries in the layers
 pack_battery_height_gap = 1;
 
-end_wall_thickness_front = 3.5 ;
+end_wall_thickness_front = 3 ;
 end_wall_thickness_back = 1;
 end_walls_thickness_total = end_wall_thickness_front + end_wall_thickness_back;
 base_thickness = 1;
@@ -189,7 +181,7 @@ module end_plate(end_plate_height, end_wall_thickness, z_offset=0) {
                 -front_width_total/2,
                 -end_plate_height/2 + z_offset
             ])
-            cube([1, front_width_total, AAA_battery_diameter], center=false);
+            cube([end_wall_thickness, front_width_total, AAA_battery_diameter], center=false);
         };
         
         /* clip notches */
@@ -244,14 +236,12 @@ module front_plate() {
             // Key to prevent battery insertion upside down.
             // Add a cutout for the +ve contact.
             let(
-                batt_key_slot_depth = 2,
+                batt_key_slot_depth = 1.5,
                 positive_terminal_slot_height = front_height_total - base_plate_zoff - base_thickness + E,
                 positive_terminal_slot_zoff = 12.6,
                 negative_terminal_slot_height = front_height_total - base_plate_zoff - base_thickness + E,
                 negative_terminal_slot_zoff = 10.5,
-                contact_guide_thickness = 1.5,
-                contact_guide_width = 13
-                
+                contact_guide_thickness = 1
             )
             translate([0, 0, 0])
             {   
@@ -283,23 +273,38 @@ module front_plate() {
                         9,
                         negative_terminal_slot_height
                     ], center=true);
-                };
-                
-                /* Slot for +ve contact plate */
-                translate([
-                    contact_guide_thickness/2 + end_wall_thickness_front,
-                    contact_guide_width/2 - 2,
-                    2
-                ])
-                cube([
-                    contact_guide_thickness,
-                    contact_guide_width,
-                    9
-                ], center=true);
-                
-                /* Slot for -ve contact guide TODO */
-                /* XXX */
+                    
+                    translate([-contact_guide_thickness-0.5,0,0])
+                    {
+                        /* Slot for +ve contact plate retainer */
+                        translate([0,3,-1])
+                        difference() {
+                            rotate([90-51,0,0])
+                            translate([0,0,-3])
+                            cube([
+                                contact_guide_thickness,
+                                6,
+                                16
+                            ], center=true);
+                            
+                            /* Crude hack to stop contact slicing into opposite pillar */
+                            translate([E,-4,3])
+                            cube([contact_guide_thickness+4*E, 5, 5],center=true);
+                        }
                         
+                        /* Extra slot for +ve contact retainer so contact plate can be inserted downwards, then swiveled into place */
+                        translate([0,6.5,-6])
+                        cube([contact_guide_thickness, 7, 4],center=true);
+                        
+                        /* Slot for -ve contact plate retainer */
+                        translate([0,-8,-6])
+                        cube([
+                            contact_guide_thickness,
+                            4,
+                            9
+                        ], center=true);
+                    };
+                };
             }
         }
         
@@ -336,7 +341,7 @@ module back_plate() {
 }
 
 module base_plate() {
-    translate([end_walls_thickness_total+2*E, -front_width_total/2, base_plate_zoff])
+    translate([end_wall_thickness_front+2*E, -front_width_total/2, base_plate_zoff])
     cube([
         base_length_outside_to_outside - end_walls_thickness_total - 8*E,
         front_width_total-2*E,
@@ -346,11 +351,26 @@ module base_plate() {
 
 module sidewall() {
     translate([end_wall_thickness_front, -side_wall_thickness/2, 0])
-    cube([
-        base_length_outside_to_outside - end_walls_thickness_total -2*E,
-        side_wall_thickness,
-        side_wall_height
-    ]);
+    let(side_wall_length = base_length_outside_to_outside - end_walls_thickness_total)
+    difference()
+    {
+        /* Main sidewall */
+        cube([
+            side_wall_length -2*E,
+            side_wall_thickness,
+            side_wall_height
+        ]);
+        
+        /* Slices for those annoying ridges, with rounded tops */
+        for(xoff = [ 1 : 2])
+        translate([side_wall_length/3 * xoff - end_wall_thickness_front, 0, 0])
+        {
+            translate([1,side_wall_thickness+2*E,0])
+            scale([1.5,1,4.5])
+            rotate([90,0,0])
+            cylinder(d=2, h=side_wall_thickness + 4*E, $fs=0.2);
+        }
+    }
 }
 
 union() {
@@ -405,7 +425,7 @@ union() {
 
 /* Show batteries */
 %
-color("blue",0.4)
+color("blue",0.2)
 translate([
     (base_length_outside_to_outside - AAA_battery_length)/2,
     0,
