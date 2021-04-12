@@ -81,7 +81,7 @@ contact_negative_zoff = 6; /* approx is ok here */
 feet_top_d = 1.5;
 feet_base_d = 3;
 
-E=0.001;
+E=0.005;
 
 side_wall_height = front_height_total/2;
 
@@ -349,27 +349,41 @@ module base_plate() {
     ]);
 }
 
-module sidewall() {
+module sidewall(lr) {
     translate([end_wall_thickness_front, -side_wall_thickness/2, 0])
     let(side_wall_length = base_length_outside_to_outside - end_walls_thickness_total)
-    difference()
-    {
-        /* Main sidewall */
-        cube([
-            side_wall_length -2*E,
-            side_wall_thickness,
-            side_wall_height
-        ]);
-        
-        /* Slices for those annoying ridges, with rounded tops */
-        for(xoff = [ 1 : 2])
-        translate([side_wall_length/3 * xoff - end_wall_thickness_front, 0, 0])
+    union() {
+        difference()
         {
-            translate([1,side_wall_thickness+2*E,0])
-            scale([1.5,1,4.5])
-            rotate([90,0,0])
-            cylinder(d=2, h=side_wall_thickness + 4*E, $fs=0.2);
+            /* Main sidewall */
+            cube([
+                side_wall_length -2*E,
+                side_wall_thickness,
+                side_wall_height
+            ]);
+            
+            /* Cut out the bottom */
+            translate([side_wall_length/5, -2*E, -E])
+            cube([
+                3*side_wall_length/5,
+                side_wall_thickness+4*E,
+                base_plate_zoff
+            ]);
         }
+        
+        /* Reinforcing at the edges of the side cuts so they don't crumple too easily */
+        let(w=side_wall_thickness*2)
+        for(fb=[0,1])
+        translate([fb*(3*side_wall_length/5 + w),0,0])
+        translate([side_wall_length/5, -2*E, -E])
+        translate([
+            -w/2 + w/2*lr - E,
+            -w/2*min(lr,0) + 4*E*lr,
+            0])
+        scale([1,0.5,1])
+        rotate([90,0,-90*lr])
+        linear_extrude(w)
+        polygon(points=[[base_plate_zoff,base_plate_zoff],[0,0],[0,base_plate_zoff]]);
     }
 }
 
@@ -392,7 +406,7 @@ union() {
         (front_width_total/2 - side_wall_thickness/2) * lr,
         -front_height_total/2
     ])
-    sidewall();
+    sidewall(lr);
     
     /* supports for rear side wall */
     let(support_height = side_wall_height - base_plate_zoff - base_thickness - 1.5)
