@@ -20,3 +20,16 @@ protection, etc. And they're fairly cheap, wheras buying the ICs or modules to
 build your own is definitely not.
 
 Enjoy. Let me know how you go.
+
+## Acknowledgements
+
+I used ["Batteries in OpenSCAD" by Thingiverse user
+`roman_hegglin`](https://www.thingiverse.com/thing:155722) to supply a
+convenient 9V model battery for preview and alignment purposes. I replaced my
+own AAA battery model with his in the process.
+
+[Philo](https://philohome.com/) has done tons of great write-ups on Lego stuff.
+While I didn't use anything of his on this project, he was a great help in my
+ongoing efforts to design an easy to make custom Powered Up compatible cable,
+and my early success with driving standard hobby DC motors from the Powered Up
+hub.
