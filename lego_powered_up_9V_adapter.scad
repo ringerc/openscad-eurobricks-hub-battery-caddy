@@ -42,7 +42,7 @@ clip_inset = 6.0;
 clip_width = 3.5;
 // Should be about 10mm between the clips
 clip_gap = front_width_total - 2*(clip_inset*clip_width);
-clip_height = 3.0;
+clip_height = 3;
 // Gap between clip slide and notch
 clip_to_notch_height = 1.0;
 // How deep clip notch is. This determines the height of the notches too. They're a bit less than 2*clip_depth.
