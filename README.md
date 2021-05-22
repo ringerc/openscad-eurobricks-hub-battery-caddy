@@ -41,3 +41,8 @@ While I didn't use anything of his on this project, he was a great help in my
 ongoing efforts to design an easy to make custom Powered Up compatible cable,
 and my early success with driving standard hobby DC motors from the Powered Up
 hub.
+
+## Connector?
+
+There's an OpenSCAD design in here for a connector too. It isn't very accurate
+or printable yet, so ignore it.
