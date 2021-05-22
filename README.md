@@ -4,13 +4,23 @@ A 3D-printable 9V battery caddy compatible with Lego® Powered Up!® Hub 88009,
 so you can make your motorized Lego creations rechargeable instead of throwing
 away zillions of AAA batteries.
 
-See [my related blog post for
-details](http://blog.ringerc.id.au/2021/05/rechargeable-lithium-ion-battery-caddy.html).
+-----
 
 **This is not a clone or duplicate of any Lego product or design. It is an
 entirely original design that replaces the 6xAAA battery holder in the Lego
 Powered Up hub with something more sensible.** Read this description before you
 send a DMCA notice, ok?
+
+-----
+
+You want the file
+[`lego_powered_up_battery_box_v5.stl`](lego_powered_up_battery_box_v5.stl).
+
+Print it with the base flat on the print bed. PLA should be fine, though I used
+PETG for mine. Print overhangs slowly.
+
+See [my related blog post for
+details](http://blog.ringerc.id.au/2021/05/rechargeable-lithium-ion-battery-caddy.html).
 
 ![Battery caddy](caddyend.jpg) ![Battery caddy](caddytop.jpg) ![Battery caddy](caddy1.jpg)
 
@@ -28,6 +38,11 @@ build your own is definitely not.
 
 Enjoy. Let me know how you go.
 
+If you're going to use the OpenSCAD sources, you'll need both my
+`lego_powered_up_battery_box_v5.stl` and `roman_hegglin`'s
+`uploads_f1_eb_f2_54_dd_Batteries.scad` in the same directory.
+
+Pull requests are welcome.
 
 ## Acknowledgements
 
